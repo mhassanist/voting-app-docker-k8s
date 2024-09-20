@@ -51,3 +51,30 @@ Now you can access the voting app by opening a web browser and navigating to `ht
 
 
 
+STEP 3: Run the redis image to store the votes
+----------------------------------------------
+The voting app uses Redis as a backend to store the votes. You can run the Redis docker image using the following command:
+
+```bash
+docker run -d -p 6379:6379 redis
+```
+
+This command runs the Redis docker image in detached mode (`-d` flag) and maps the container port `6379` to the host port `6379` (`-p 6379:6379` flag). This allows the voting app to connect to the Redis server running in the container. 
+
+Note that we don't have the Redis image in the project, so Docker will pull the Redis image from Docker Hub if it is not already present on your system.
+
+Steo 3.1: Rerun the voting app with a link to the Redis container
+---------------------------------------------------------------------------
+If you run the two containers separately and try to use the voting app, you will notice that the votes are not being stored in Redis. The app will crash when you try to vote because it cannot connect to the Redis server This is because the voting app container is not able to connect to the Redis server running in the Redis container.
+
+To fix this, you need to run the voting app container with a link to the Redis container. You can do this using the following command:
+
+Before doing so, let's remove the existing voting app container:
+
+```bash
+docker rm voting-app-frontend
+```
+
+```bash
+docker run -d -p 8080:80 --name voting-app-frontend -e REDIS_HOST=redis --link 8a67f73192bf:redis voting-app-frontend
+```
