@@ -20,21 +20,25 @@ var pool = new Pool({
 
 - Worker App: A background worker that processes the votes stored in the Redis database and stores them in the PostgreSQL database. This app is built using Python and RQ (Redis Queue). We will create a docker image for this app.
 
+## Hint:
+1. If you encounter connectivity issues between the containers while working, make sure that the containers are running and you are using the correct names. You can always delete the images and containers and start fresh if you run into issues.
 
+2. Don't feel furstrated if you encounter issues while working on this project. It's normal to face challenges while working with Docker and Kubernetes. The key is to learn from the issues and keep moving forward.
+
+
+```bash
 
 STEP 1: Run the voting app with Docker
 ---------------------------------------
-Docker is a containerization platform that packages your application and all its dependencies together in the form of a container image. This container image can then be run on any Docker engine.
-
 The docker image for the voting app is ready to be built and run. The docker image is built using the Dockerfile in the root directory of the project. The Dockerfile contains the instructions to build the docker image.
 
-To build the docker image, run the following command in the root directory of the project `where the Dockerfile is present`:
+To build the docker image, run the following command in the directory of the project where the Dockerfile is present (`vote-app-frontend` in our case).
 
 ```bash
-docker build -t voting-app-frontend .
+docker build -t voting-app-img .
 ```
 
-The `-t` flag is used to tag the image with the name `voting-app-frontend`. This command will build the docker image with the name `voting-app-frontend`.
+The `-t` flag is used to tag the image with the name `voting-app-frontend`. This command will build the docker image with the tag `voting-app-frontend`.
 
 The `.` at the end of the command specifies the build context, which is the current directory. The Dockerfile is present in the current directory, and the build context is set to the current directory.
 
@@ -46,7 +50,7 @@ You don't have to upload the image to Dockerhub if you are working locally. But 
 docker tag voting-app-frontend mhassanist/voting-app-frontend:v1
 ```
 
-This command tags the docker image with the name `mhassanist/voting-app-frontend:v1`, where `mhassanist` is your Docker Hub username and `voting-app-frontend` is the repository name.
+This command tags the docker image with the name `user/voting-app-frontend:v1`, where `user` is your Docker Hub username and `voting-app-frontend` is the repository name.
 
 Login to Docker Hub using the following command:
 
@@ -60,17 +64,17 @@ Next, you can push the docker image to Docker Hub using the following command:
 docker push mhassanist/voting-app-frontend:v1
 ```
 
-
 STEP 2: Run the voting app docker image
 ----------------------------------------
 Once the docker image is built, you can run the docker image using the following command:
 
 ```bash
-docker run -p 8080:80 voting-app-frontend
+docker run -d -p 8080:80 --name voting-app voting-app-img
 ```
 
 Now you can access the voting app by opening a web browser and navigating to `http://localhost:8080`.
 
+If you click on the `Cat` or `Dog` button, the server will crash because it cannot connect to the Redis server to store the votes. We will fix this in the next step.
 
 
 STEP 3: Run the redis image to store the votes
@@ -78,38 +82,39 @@ STEP 3: Run the redis image to store the votes
 The voting app uses Redis as a backend to store the votes. You can run the Redis docker image using the following command:
 
 ```bash
-docker run -d -p 6379:6379 --name redis1 redis
+docker run -d -p 6379:6379 --name redis redis
 ```
-
 
 
 This command runs the Redis docker image in detached mode (`-d` flag) and maps the container port `6379` to the host port `6379` (`-p 6379:6379` flag). This allows the voting app to connect to the Redis server running in the container. 
 
 Note that we don't have the Redis image in the project, so Docker will pull the Redis image from Docker Hub if it is not already present on your system.
 
+If you test the previous step again, you will notice that the voting app is still crashing when you try to vote. This is because the voting app container **is not able to connect** to the Redis server running in the Redis container.
+
 Steo 3.1: Rerun the voting app with a link to the Redis container
 ---------------------------------------------------------------------------
-If you run the two containers separately and try to use the voting app, you will notice that the votes are not being stored in Redis. The app will crash when you try to vote because it cannot connect to the Redis server This is because the voting app container is not able to connect to the Redis server running in the Redis container.
 
 To fix this, you need to run the voting app container with a link to the Redis container. You can do this using the following command:
 
 Before doing so, let's remove the existing voting app container:
 
 ```bash
-docker rm voting-app-frontend
+docker rm voting-app
 ```
 
 ```bash
-docker run -d -p 8080:80 --link redis1:redis --name voting-app-fe voting-app-frontend
+docker run -d -p 8080:80 --link redis:redis --name voting-app voting-app-img
 ```
 
+The voting should be working now. You can access the voting app by opening a web browser and navigating to `http://localhost:8080`. You can vote for `Cat` or `Dog`, and the votes will be stored in the Redis database.
 
 STEP 4: Run the postgres image to store the votes
 ------------------------------------------------
-The voting app uses a PostgreSQL database to store the votes. You can run the PostgreSQL docker image using the following command:
+The project uses a PostgreSQL database to store the votes. You can run the PostgreSQL docker image using the following command:
 
 ```bash
-docker run -d --name postgres -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres postgres
+docker run -d --name db -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres postgres
 ```
 
 This command runs the PostgreSQL docker image in detached mode (`-d` flag) and maps the container port `5432` to the host port `5432` (`-p 5432:5432` flag). It also sets the environment variables `POSTGRES_USER` and `POSTGRES_PASSWORD` to `postgres`, which are the default username and password for the PostgreSQL database.
@@ -120,8 +125,13 @@ The result app is a simple web application that displays the results of the voti
 
 To build the docker image for the result app and give it access (link it) to the PostgreSQL database, run the following command in the `result-app` directory:
 
+Build the docker image for the result app:
 ```bash
-docker run -d --link redis-container-name-or-id:db -p 8090:80 -e DB_HOST=postgres -e DB_USER=postgres -e DB_PASSWORD=postgres results-frontend
+docker build -t results-frontend-img .
+```
+
+```bash
+docker run -d --link db:db -p 8090:80 -e DB_HOST=postgres -e DB_USER=postgres -e DB_PASSWORD=postgres --name results-frontend results-frontend-img
 
 ```
 
@@ -131,8 +141,15 @@ The worker app is a background worker that processes the votes stored in the Red
 
 To build the docker image for the worker app and give it access (link it) to the Redis and PostgreSQL databases, run the following command in the `worker-app` directory:
 
+Open the worker directory in your terminal and run the following command:
+
 ```bash
-docker run -d --link redis-container-name-or-id:db --link postgres-container-name-or-id:postgres -e DB_HOST=postgres -e REDIS_HOST=redis worker
+docker build -t worker-img .
 ```
+
+```bash
+docker run -d --name worker --link redis:redis --link db:db -e DB_HOST=postgres -e REDIS_HOST=redis worker-img
+```
+
 
 Now everything is up and running using Docker. You can access the voting app by opening a web browser and navigating to `http://localhost:8080`. You can access the results app by navigating to `http://localhost:8090`.
