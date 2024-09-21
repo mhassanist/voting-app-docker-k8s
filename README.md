@@ -1,5 +1,27 @@
 # Voting App with Docker and Kubernetes 
 
+# Solution Structure:
+---------------------
+- Voting App: A simple web application that allows users to vote between two options. This app is built using Python and Flask. We will ctrate a docker image for this app.
+
+- Redis: A key-value store used to store the votes in the voting app. This app is built using the official Redis Docker image. The alias for this container must be `redis` because the voting app is configured to connect to a Redis server with the hostname `redis`. There is no username or password required to connect to the Redis server.
+
+- Result App: A simple web application that displays the results of the voting app. This app is built using JavaScript and Express. We will create a docker image for this app.
+
+
+- PostgreSQL: A relational database used to store the votes from the voting app. This app is built using the official PostgreSQL Docker image. The alias for this container must be `db` because the results app is configured to connect to a PostgreSQL database with the hostname `db`. The PostgreSQL database is configured with the username `postgres` and the password `postgres`.
+
+
+```javascript
+var pool = new Pool({
+  connectionString: 'postgres://postgres:postgres@db/postgres'
+});
+```
+
+- Worker App: A background worker that processes the votes stored in the Redis database and stores them in the PostgreSQL database. This app is built using Python and RQ (Redis Queue). We will create a docker image for this app.
+
+
+
 STEP 1: Run the voting app with Docker
 ---------------------------------------
 Docker is a containerization platform that packages your application and all its dependencies together in the form of a container image. This container image can then be run on any Docker engine.
