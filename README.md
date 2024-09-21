@@ -56,8 +56,10 @@ STEP 3: Run the redis image to store the votes
 The voting app uses Redis as a backend to store the votes. You can run the Redis docker image using the following command:
 
 ```bash
-docker run -d -p 6379:6379 redis
+docker run -d -p 6379:6379 --name redis1 redis
 ```
+
+
 
 This command runs the Redis docker image in detached mode (`-d` flag) and maps the container port `6379` to the host port `6379` (`-p 6379:6379` flag). This allows the voting app to connect to the Redis server running in the container. 
 
@@ -76,7 +78,7 @@ docker rm voting-app-frontend
 ```
 
 ```bash
-docker run -d -p 8080:80 --name voting-app-frontend -e REDIS_HOST=redis --link 8a67f73192bf:redis voting-app-frontend
+docker run -d -p 8080:80 --link redis1:redis --name voting-app-fe voting-app-frontend
 ```
 
 
@@ -85,7 +87,7 @@ STEP 4: Run the postgres image to store the votes
 The voting app uses a PostgreSQL database to store the votes. You can run the PostgreSQL docker image using the following command:
 
 ```bash
-docker run -d -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres postgres
+docker run -d --name postgres -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres postgres
 ```
 
 This command runs the PostgreSQL docker image in detached mode (`-d` flag) and maps the container port `5432` to the host port `5432` (`-p 5432:5432` flag). It also sets the environment variables `POSTGRES_USER` and `POSTGRES_PASSWORD` to `postgres`, which are the default username and password for the PostgreSQL database.
@@ -97,6 +99,18 @@ The result app is a simple web application that displays the results of the voti
 To build the docker image for the result app and give it access (link it) to the PostgreSQL database, run the following command in the `result-app` directory:
 
 ```bash
-docker run -d --link postgres:db_host -p 8080:80 -e DB_HOST=db_host -e DB_USER=postgres -e DB_PASSWORD=postgres my_frontend_image
+docker run -d --link redis-container-name-or-id:db -p 8090:80 -e DB_HOST=postgres -e DB_USER=postgres -e DB_PASSWORD=postgres results-frontend
 
 ```
+
+STEP 6: Run the worker app with Docker
+---------------------------------------
+The worker app is a background worker that processes the votes stored in the Redis database and stores them in the PostgreSQL database. The worker app is built using the Dockerfile in the `worker-app` directory.
+
+To build the docker image for the worker app and give it access (link it) to the Redis and PostgreSQL databases, run the following command in the `worker-app` directory:
+
+```bash
+docker run -d --link redis-container-name-or-id:db --link postgres-container-name-or-id:postgres -e DB_HOST=postgres -e REDIS_HOST=redis worker
+```
+
+Now everything is up and running using Docker. You can access the voting app by opening a web browser and navigating to `http://localhost:8080`. You can access the results app by navigating to `http://localhost:8090`.
