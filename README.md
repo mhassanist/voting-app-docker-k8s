@@ -153,3 +153,26 @@ docker run -d --name worker --link redis:redis --link db:db -e DB_HOST=postgres 
 
 
 Now everything is up and running using Docker. You can access the voting app by opening a web browser and navigating to `http://localhost:8080`. You can access the results app by navigating to `http://localhost:8090`.
+
+
+# Making our life easier with docker-compose
+--------------------------------------------
+Docker Compose is a tool for defining and running multi-container Docker applications. With Compose, you use a YAML file to configure your application's services. Then, with a single command, you create and start all the services from your configuration.
+
+Check the `docker-compose.yml` file in the root directory of the project. This file defines the services for the voting app, Redis, PostgreSQL, result app, and worker app.
+
+To run the entire application using Docker Compose, run the following command in the root directory of the project:
+
+```bash
+docker-compose up -d
+```
+
+To stop the application, run the following command:
+
+```bash
+docker-compose down
+```
+
+You can access the voting app by opening a web browser and navigating to `http://localhost:8080`. You can access the results app by navigating to `http://localhost:8090`.
+
+Best of luck with your project! If you have any questions or need help, feel free to ask.

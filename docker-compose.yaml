@@ -1,0 +1,34 @@
+version: '3'
+services:
+  redis:
+    container_name: redis
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+  
+  vote-app:
+    container_name: voting-app
+    build: "./vote-frontend"
+    ports:
+      - "8080:80"
+  
+  postgres-db:
+    image: "postgres"
+    container_name: db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+  
+  worker-app:
+    build: "./worker-app/worker"  
+    container_name: worker
+
+  results-app:
+    container_name: results
+    build: "./results-frontend"
+    ports:
+      - "8090:80"
