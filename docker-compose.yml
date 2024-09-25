@@ -7,8 +7,16 @@ services:
       - "6379:6379"
   
   vote-app:
-    container_name: voting-app
-    build: "./vote-frontend"
+    image: vote-app-image  # Use the image name built in Step 1
+    deploy:
+      replicas: 4
+      placement:
+        max_replicas_per_node: 2
+      update_config:
+        parallelism: 2
+        delay: 5s
+      restart_policy:
+        condition: on-failure
     ports:
       - "8080:80"
   
@@ -24,11 +32,10 @@ services:
       - "5432:5432"
   
   worker-app:
-    build: "./worker-app/worker"  
+    image: worker-app-image  # Use the image name built in Step 1
     container_name: worker
 
   results-app:
-    container_name: results
-    build: "./results-frontend"
+    image: results-app-image  # Use the image name built in Step 1
     ports:
       - "8090:80"
