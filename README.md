@@ -176,3 +176,22 @@ docker-compose down
 You can access the voting app by opening a web browser and navigating to `http://localhost:8080`. You can access the results app by navigating to `http://localhost:8090`.
 
 Best of luck with your project! If you have any questions or need help, feel free to ask.
+
+
+# Using Docker Swarm:
+-------------------
+Docker Swarm is a container orchestration tool that allows you to manage a cluster of Docker hosts as a single virtual system. You can use Docker Swarm to deploy and scale your applications across multiple Docker hosts.
+
+To use Docker Swarm, you need to have Docker installed on your system. You can create a Docker Swarm cluster using the following command:
+
+```bash
+docker swarm init
+```
+
+Create a stack using the `docker-compose.yml` file:
+
+```bash
+docker stack deploy -c docker-compose.yml voting-app-swarm
+```
+
+
